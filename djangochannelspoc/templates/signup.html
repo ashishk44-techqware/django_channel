@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="col-lg-6 mx-auto ">
+        <div class="card shadow">
+            <div class="card-body">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    {% for f in form %}
+                        <div class="form-group">
+                            {{ f.label_tag }}
+                            {{ f }}
+                            <label for="" class="text-danger">{{ f.errors }}</label>
+                        </div>
+                    {% endfor %}
+
+                    <input type="submit" value="Signup" class="btn btn-block btn-info text-light">
+                </form>
+                <a href="{% url 'login' %}" class="mt-2">Login</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

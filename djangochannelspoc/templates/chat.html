@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header text-center">
+                <span class="text-uppercase">{{ receiver.first_name }} {{ receiver.last_name }}</span>
+            </div>
+            <div class="card-body" id="chatWrap"
+                 style="background-color: #6495ed4d;min-height: 500px;max-height: 500px;overflow-y: auto;">
+                {% for m in message %}
+                    {% if m.sender.id == sender.id %}
+                        <div class="d-flex justify-content-end">
+                            <div class="badge bg-primary text-white  p-3">
+                                <div>{{ m.message }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mb-2 mt-1">
+                            <div style="font-size: 10px">{{ m.doc|date:'g:i A | M j' }}</div>
+                        </div>
+                    {% else %}
+                        <div class="d-flex justify-content-start">
+                            <div class="badge bg-light text-muted  shadow-sm p-3">
+                                <div>{{ m.message }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-start mb-2 mt-1">
+                            <div style="font-size: 10px">{{ m.doc|date:'g:i A | M j' }}</div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="card-footer">
+                <div class="input-group">
+                    <input id="chat-message-input" type="text" class="form-control input-sm"
+                           placeholder="Type your message here..."/>
+                    <span class="input-group-btn">
+                            <button class="btn btn-primary ms-1" id="chat-message-submit">
+                                Send</button>
+                        </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const sender = '{{ sender.id }}'
+        const receiver = '{{ receiver.id }}'
+        const room_name = '{{ room_name }}'
+        const chatWrap = document.getElementById('chatWrap');
+        chatWrap.scrollTo(0, chatWrap.scrollHeight);
+        const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + room_name);
+
+        chatSocket.onopen = function (e) {
+            console.log('connected')
+        }
+
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            if (sender === data.sender) {
+                chatWrap.innerHTML += `<div class="d-flex justify-content-end">
+                            <div class="badge bg-primary text-white  p-3">
+                                <div>${data.message}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mb-2 mt-1">
+                            <div style="font-size: 10px">${moment(data.doc).format('h:mm A | MMM D')}</div>
+                        </div>`;
+            } else {
+                chatWrap.innerHTML += `<div class="d-flex justify-content-start">
+                            <div class="badge bg-light text-muted  shadow-sm p-3">
+                                <div>${data.message}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-start mb-2 mt-1">
+                            <div style="font-size: 10px">${moment(data.doc).format('h:mm A | MMM D')}</div>
+                        </div>`
+            }
+            chatWrap.scrollTo(0, chatWrap.scrollHeight);
+        };
+
+        chatSocket.onclose = function (e) {
+            console.log('disconnected');
+        };
+
+        var message = document.querySelector('#chat-message-input')
+        message.focus();
+        document.querySelector('#chat-message-input').onkeyup = function (e) {
+            if (e.keyCode === 13) {  // enter, return
+                if (message.value) {
+                    document.querySelector('#chat-message-submit').click();
+                }else{
+                    message.focus();
+                }
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function (e) {
+            if (message.value) {
+                chatSocket.send(JSON.stringify({
+                    'message': message.value,
+                    'receiver': receiver,
+                }));
+                message.value = '';
+            }else{
+                message.focus();
+            }
+        }
+    </script>
+{% endblock %}

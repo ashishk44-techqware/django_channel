@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <div class="col-lg-6 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-body p-5">
+                <h1 class="text-center">Home</h1>
+                <div class="searchInput">
+                    <input type="text" name="search" id="search" class="form-control form-control-lg shadow-sm"
+                           placeholder="Search by username or name">
+                    <div class="list-group list-group-flush shadow-sm" id="autosuggest-results"
+                         style="z-index: 10;position: absolute;width: 85%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const searchInput = document.getElementById('search');
+        const autosuggestResults = document.getElementById('autosuggest-results');
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim();
+
+            if (query.length > 0) {
+                fetch(`/autosuggest?search=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        autosuggestResults.innerHTML = '';
+                        if(data) {
+                            data.slice(0, 9).forEach(item => {
+                                const li = document.createElement('li');
+                                li.classList.add('list-group-item')
+                                const a = document.createElement('a');
+                                a.href = `/chat/${item.id}`;  // Add your URL or modify as needed
+                                a.textContent = item.first_name + ' ' + item.last_name;
+                                li.appendChild(a);
+                                autosuggestResults.appendChild(li);
+                            });
+                        }else{
+                            autosuggestResults.innerHTML = `<span class="text-dark">No result found!.</span>`
+                        }
+                    });
+            } else {
+                autosuggestResults.innerHTML = '';
+            }
+        });
+
+    </script>
+{% endblock %}
